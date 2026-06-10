@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Painel Administrativo - Studio Hadassa</title>
+    <link rel="stylesheet" href="style.css?v=9.10">
+    
+    <!-- Bibliotecas de Compatibilidade do Firebase com carregamento garantido e único -->
+    <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script defer src="admin.js?v=9.10"></script>
+</head>
+<body>
+
+    <!-- 🔐 TELA DE LOGIN INTEGRADA -->
+    <div class="login-backdrop" id="admin-login-screen">
+        <div class="login-box">
+            <img src="logo.jpg" alt="Logo Studio Hadassa" class="logo-header" style="margin-bottom: 20px;">
+            <p style="color: #e3dec3; font-style: italic; font-size: 0.85rem; margin-bottom: 10px;">Acesso Restrito</p>
+            <h2 style="font-family: 'Playfair Display', serif; color: var(--gold-primary); margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px;">Studio Hadassa</h2>
+            
+            <div class="form-group" style="text-align: left;">
+                <label>Usuário</label>
+                <input type="text" id="login-username" class="form-control" placeholder="Digite seu usuário">
+            </div>
+            <div class="form-group" style="text-align: left; margin-bottom: 25px;">
+                <label>Senha</label>
+                <input type="password" id="login-password" class="form-control" placeholder="••••">
+            </div>
+            <button class="btn-premium" id="btn-execute-login" style="width: 100%;">Entrar no Console</button>
+        </div>
+    </div>
+
+    <!-- 💼 LAYOUT DE DASHBOARD COM SIDEBAR ADAPTATIVA -->
+    <div class="admin-layout" id="admin-main-layout" style="display: none;">
+        
+        <!-- Menu Lateral / Dock Inferior Móvel -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-logo">
+                <h2>Hadassa</h2>
+            </div>
+            <nav class="sidebar-menu">
+                <button class="sidebar-item active" data-target="section-dashboard">
+                    <span>📊</span> <span>Dashboard</span>
+                </button>
+                <button class="sidebar-item" data-target="section-escala">
+                    <span>📅</span> <span>Configurar Agenda</span>
+                </button>
+                <button class="sidebar-item" data-target="section-caixa">
+                    <span>💰</span> <span>Caixa</span>
+                </button>
+                <button class="sidebar-item" data-target="section-roteamento">
+                    <span>📞</span> <span>Contatos</span>
+                </button>
+                <button class="sidebar-item" data-target="section-configuracoes">
+                    <span>⚙️</span> <span>Configs</span>
+                </button>
+            </nav>
+            <button class="sidebar-item" id="btn-admin-logout">
+                <span>🚪</span> <span>Sair</span>
+            </button>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="admin-content">
+            
+            <!-- SEÇÃO 1: Dashboard / Quadro de Horários -->
+            <section class="admin-section active" id="section-dashboard">
+                <h2 class="section-title" style="padding: 0 0 12px 0;">Dashboard de Atendimentos</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-val" id="stat-total">0</div>
+                        <div class="stat-lbl">Agendas Ativas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val" id="stat-beatriz">0</div>
+                        <div class="stat-lbl">Beatriz (Cabelo/Sobr./Cíl.)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val" id="stat-miria">0</div>
+                        <div class="stat-lbl">Miriã (Unhas)</div>
+                    </div>
+                </div>
+
+                <div class="tabs-container">
+                    <button class="tab-btn active" id="tab-all">Todas</button>
+                    <button class="tab-btn" id="tab-beatriz">Beatriz</button>
+                    <button class="tab-btn" id="tab-miria">Miriã</button>
+                </div>
+
+                <div class="admin-card">
+                    <div id="admin-bookings-container"></div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 2: Agenda de Trabalho -->
+            <section class="admin-section" id="section-escala">
+                <h2 class="section-title" style="padding: 0 0 12px 0;">Liberar Agenda de Trabalho</h2>
+                <div class="admin-card">
+                    <form id="admin-slots-form">
+                        <div class="form-group">
+                            <label>Selecione a data de agendamento</label>
+                            <input type="date" id="admin-date" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Profissional Responsável</label>
+                            <select id="admin-professional" class="form-control">
+                                <option value="Beatriz">Beatriz (Cabelo/Sobrancelhas/Cílios)</option>
+                                <option value="Miriã">Miriã (Manicure/Unhas)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Marque as horas disponíveis na agenda</label>
+                            <div class="hours-pill-grid">
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="08:00"><span class="hour-pill-box">08:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="09:00"><span class="hour-pill-box">09:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="10:00"><span class="hour-pill-box">10:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="11:00"><span class="hour-pill-box">11:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="12:00"><span class="hour-pill-box">12:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="13:00"><span class="hour-pill-box">13:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="14:00"><span class="hour-pill-box">14:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="15:00"><span class="hour-pill-box">15:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="16:00"><span class="hour-pill-box">16:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="17:00"><span class="hour-pill-box">17:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="18:00"><span class="hour-pill-box">18:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="19:00"><span class="hour-pill-box">19:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="20:00"><span class="hour-pill-box">20:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="21:00"><span class="hour-pill-box">21:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="22:00"><span class="hour-pill-box">22:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="23:00"><span class="hour-pill-box">23:00</span></label>
+                                <label class="hour-pill"><input type="checkbox" name="hours-checked" value="00:00"><span class="hour-pill-box">00:00</span></label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-premium" style="width: 100%; margin-top: 15px;">Atualizar Agenda</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 3: Caixa / Financeiro -->
+            <section class="admin-section" id="section-caixa">
+                <h2 class="section-title" style="padding: 0 0 12px 0;">Fluxo de Caixa e Caixa Diário</h2>
+                
+                <div class="finance-summary">
+                    <div class="summary-card revenue">
+                        <div class="stat-lbl">Total Entradas (R$)</div>
+                        <div class="finance-value" id="finance-total-revenue">0.00</div>
+                    </div>
+                    <div class="summary-card expense">
+                        <div class="stat-lbl">Total Saídas (R$)</div>
+                        <div class="finance-value" id="finance-total-expense">0.00</div>
+                    </div>
+                    <div class="summary-card balance">
+                        <div class="stat-lbl">Saldo Líquido (R$)</div>
+                        <div class="finance-value" id="finance-current-balance">0.00</div>
+                    </div>
+                </div>
+
+                <div class="finance-columns">
+                    <!-- Lançamento Financeiro -->
+                    <div class="admin-card">
+                        <h3 style="font-family: 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 15px;">Novo Lançamento</h3>
+                        <div class="form-group">
+                            <label>Descrição do Lançamento</label>
+                            <input type="text" id="cash-desc" class="form-control" placeholder="Ex: Entrada cabelo Ana Silva">
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Transação</label>
+                            <select id="cash-type" class="form-control">
+                                <option value="Entrada">Entrada (Ganho)</option>
+                                <option value="Saída">Saída (Despesa)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="payment-method-wrap">
+                            <label>Como entrou o dinheiro?</label>
+                            <select id="cash-payment-method" class="form-control">
+                                <option value="Pix">Pix</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Débito">Débito</option>
+                                <option value="Crédito">Crédito</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Valor (R$)</label>
+                            <input type="number" step="0.01" id="cash-value" class="form-control" placeholder="ex: 80.00">
+                        </div>
+                        <button class="btn-premium" id="btn-add-cash-flow" style="width: 100%; margin-top: 10px;">Lançar no Caixa</button>
+                    </div>
+
+                    <!-- Lista de Transações Recentes -->
+                    <div class="admin-card">
+                        <h3 style="font-family: 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 15px;">Lançamentos Recentes</h3>
+                        <div id="cash-flow-list" style="max-height: 380px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 4: Roteamento de Contatos -->
+            <section class="admin-section" id="section-roteamento">
+                <h2 class="section-title" style="padding: 0 0 12px 0;">WhatsApp das Profissionais</h2>
+                <div class="admin-card">
+                    <div class="form-group">
+                        <label>Contato Beatriz (Cabelo, Sobranc., Cílios)</label>
+                        <input type="text" id="admin-beatriz" class="form-control" placeholder="Ex: 5551986286970">
+                    </div>
+                    <div class="form-group">
+                        <label>Contato Miriã (Unhas)</label>
+                        <input type="text" id="admin-miria" class="form-control" placeholder="Ex: 5551994922911">
+                    </div>
+                    <button class="btn-premium" id="btn-save-configs" style="width: 100%;">Salvar Contatos</button>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 5: Configurações do Sistema -->
+            <section class="admin-section" id="section-configuracoes">
+                <h2 class="section-title" style="padding: 0 0 12px 0;">Parâmetros Globais</h2>
+                <div class="admin-card">
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Use estas ações apenas se desejar limpar ou depurar todos os dados guardados em modo de teste do estúdio.</p>
+                    
+                    <button class="btn-premium" id="btn-clear-history" style="width: 100%; margin-bottom: 12px; background-color: var(--dark-charcoal-light); color: var(--gold-primary); border-color: var(--gold-primary);">Limpar Histórico de Agendas Passadas</button>
+                    
+                    <button class="btn-premium btn-secondary" id="btn-clear-bookings" style="width: 100%; margin-bottom: 12px; color: #a12e2e; border-color: #f2dcdc;">Apagar Todos os Agendamentos</button>
+                    <button class="btn-premium btn-secondary" id="btn-clear-slots" style="width: 100%; margin-bottom: 12px; color: #a12e2e; border-color: #f2dcdc;">Resetar Todas as Agendas</button>
+                    <button class="btn-premium" id="btn-mobile-logout" style="width: 100%; background-color: #333; color: #fff;">Fazer Logout / Sair do Console</button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- 🖼️ MODAL DE PRÉ-VISUALIZAÇÃO DE IMAGENS -->
+    <div class="modal-backdrop" id="image-preview-modal" style="z-index: 11000;">
+        <div class="modal-content" style="max-width: 440px; background-color: var(--dark-charcoal); border: 2px solid var(--gold-primary);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--gold-primary);">
+                <h3>Visualização da Imagem</h3>
+            </div>
+            <div class="modal-body" style="text-align: center; padding: 15px;">
+                <img id="preview-modal-img" src="" style="width: 100%; max-height: 380px; object-fit: contain; border-radius: var(--border-radius-sm); border: 1.5px solid var(--gold-primary);">
+            </div>
+            <div class="modal-footer" style="background-color: var(--dark-charcoal-light);">
+                <button class="btn-premium" id="btn-close-image-preview" style="width: 100%;">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔔 MODAL DE ALERTA DE NOVA SOLICITAÇÃO -->
+    <div class="modal-backdrop" id="new-booking-alert-modal" style="z-index: 12000;">
+        <div class="modal-content" style="max-width: 400px; background-color: var(--dark-charcoal); border: 2px solid var(--gold-primary); text-align: center;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--gold-primary);">
+                <h3 style="color: var(--gold-primary); font-family: 'Playfair Display', serif; letter-spacing: 1px;">🔔 Nova Solicitação!</h3>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <p style="color: #ffffff; font-size: 0.95rem; line-height: 1.6; font-weight: 500;">
+                    Você tem uma nova solicitação de atendimento aguardando revisão na sua agenda.
+                </p>
+            </div>
+            <div class="modal-footer" style="background-color: var(--dark-charcoal-light);">
+                <button class="btn-premium" id="btn-new-booking-acknowledge" style="width: 100%; background-color: var(--gold-primary); color: var(--dark-charcoal); border-color: var(--gold-primary);">Estou Ciente</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

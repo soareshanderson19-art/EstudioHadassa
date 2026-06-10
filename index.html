@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Studio Hadassa - Agendamentos</title>
+    <link rel="stylesheet" href="style.css?v=9.10">
+</head>
+<body>
+
+    <div class="mobile-container">
+        
+        <!-- Header Hadassa -->
+        <header class="header-hadassa">
+            <img src="logo.jpg" alt="Logo Studio Hadassa" class="logo-header">
+            <p class="slogan-topo">Onde sua beleza floresce</p>
+            <h1>Studio Hadassa</h1>
+        </header>
+
+        <!-- Barra de Progresso -->
+        <div class="stepper">
+            <div class="step active" id="step-indicator-1">
+                <div class="step-circle">1</div>
+                <span class="step-label">Procedimento</span>
+            </div>
+            <div class="step" id="step-indicator-2">
+                <div class="step-circle">2</div>
+                <span class="step-label">Agenda</span>
+            </div>
+            <div class="step" id="step-indicator-3">
+                <div class="step-circle">3</div>
+                <span class="step-label">Cadastro</span>
+            </div>
+        </div>
+
+        <!-- ETAPA 1: Procedimentos -->
+        <div class="step-content active" id="step-1">
+            <h2 class="section-title">O que deseja realizar hoje?</h2>
+            <div class="services-list" id="services-container"></div>
+        </div>
+
+        <!-- ETAPA 2: Calendário & Agenda -->
+        <div class="step-content" id="step-2">
+            <h2 class="section-title">Selecione o Dia</h2>
+            <div class="calendar-carousel" id="calendar-container"></div>
+
+            <h2 class="section-title">Horários Disponíveis</h2>
+            <div class="slots-grid" id="slots-container"></div>
+        </div>
+
+        <!-- ETAPA 3: Cadastro de Clientes e Anexos -->
+        <div class="step-content" id="step-3">
+            <h2 class="section-title">Confirmar Identidade</h2>
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="client-name">Nome Completo</label>
+                    <input type="text" id="client-name" class="form-control" placeholder="Digite seu nome completo">
+                </div>
+                <div class="form-group">
+                    <label for="client-phone">Número de WhatsApp</label>
+                    <input type="tel" id="client-phone" class="form-control" placeholder="Ex: (51) 98628-6970">
+                </div>
+                
+                <!-- Campos de Anexo de Fotos -->
+                <div class="form-group" style="margin-top: 25px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
+                    <label>Foto de Inspiração (Opcional)</label>
+                    <input type="file" id="file-inspiration" class="form-control" accept="image/*" style="padding: 10px;">
+                </div>
+                <div class="form-group">
+                    <label>Foto Atual do Cabelo/Unha (Opcional)</label>
+                    <input type="file" id="file-current" class="form-control" accept="image/*" style="padding: 10px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Rodapé de Navegação do App -->
+        <div class="action-container">
+            <button class="btn-premium btn-secondary" id="btn-prev" disabled>Voltar</button>
+            <button class="btn-premium" id="btn-next">Avançar</button>
+        </div>
+
+    </div>
+
+    <!-- MODAL PREMIUM DE REVISÃO -->
+    <div class="modal-backdrop" id="confirmation-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Revisar Reserva</h3>
+            </div>
+            <div class="modal-body" style="max-height: 350px; overflow-y: auto;">
+                <ul class="summary-list">
+                    <li class="summary-item"><strong>Cliente:</strong> <span id="summary-name">...</span></li>
+                    <li class="summary-item"><strong>Procedimento:</strong> <span id="summary-service">...</span></li>
+                    <li class="summary-item"><strong>Profissional:</strong> <span id="summary-prof">...</span></li>
+                    <li class="summary-item"><strong>Data:</strong> <span id="summary-date">...</span></li>
+                    <li class="summary-item"><strong>Horário:</strong> <span id="summary-time">...</span></li>
+                    <li class="summary-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <strong>Anexos:</strong>
+                        <span id="summary-files" style="font-size: 0.8rem; line-height: 1.4; font-weight: bold; color: var(--gold-primary);">Verificando arquivos...</span>
+                    </li>
+                    <li class="summary-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                        <strong>Detalhes do Pedido:</strong>
+                        <span id="summary-details" style="white-space: pre-wrap; font-size: 0.8rem; line-height: 1.4;">...</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-premium btn-secondary" id="btn-modal-cancel">Corrigir</button>
+                <button class="btn-premium" id="btn-modal-confirm" style="background-color: var(--gold-primary); color: var(--dark-charcoal); border-color: var(--gold-primary);">Concluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Importação corrigida com a flag module -->
+    <script type="module" src="script.js?v=9.10"></script>
+</body>
+</html>
