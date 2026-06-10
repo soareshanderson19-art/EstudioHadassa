@@ -69,24 +69,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Função que busca os horários já salvos para o dia e profissional selecionados
+    async function loadExistingSlots() {
+        const date = document.getElementById('admin-date').value;
+        const professional = document.getElementById('admin-professional').value;
+
+        // Desmarca todas as caixas antes de carregar
+        document.querySelectorAll('input[name="hours-checked"]').forEach(cb => cb.checked = false);
+
+        if (!date || !professional) return;
+
+        try {
+            const docId = `${date}_${professional}`;
+            const docSnap = await db.collection("availableSlots").doc(docId).get();
+            if (docSnap.exists) {
+                const times = docSnap.data().times || [];
+                times.forEach(time => {
+                    const cb = document.querySelector(`input[name="hours-checked"][value="${time}"]`);
+                    if (cb) cb.checked = true;
+                });
+            }
+        } catch (err) {
+            console.error("Erro ao carregar horários cadastrados: ", err);
+        }
+    }
+
+    // Monitora a troca de data ou profissional para atualizar as caixas na tela
+    document.getElementById('admin-date').addEventListener('change', loadExistingSlots);
+    document.getElementById('admin-professional').addEventListener('change', loadExistingSlots);
+
+    // Envio do formulário de agenda separada por profissional
     document.getElementById('admin-slots-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const date = document.getElementById('admin-date').value;
+        const professional = document.getElementById('admin-professional').value;
         const selectedHours = Array.from(document.querySelectorAll('input[name="hours-checked"]:checked')).map(cb => cb.value);
 
         if (!date) return alert('Escolha uma data.');
-        if (selectedHours.length === 0) return alert('Selecione ao menos um horário.');
+        if (!professional) return alert('Selecione o profissional responsável.');
+
+        const docId = `${date}_${professional}`;
 
         try {
-            await db.collection("availableSlots").doc(date).set({ times: selectedHours });
-            alert(`Agenda configurada para o dia ${date.split('-').reverse().join('/')}!`);
+            await db.collection("availableSlots").doc(docId).set({ times: selectedHours });
+            alert(`Agenda de ${professional} configurada para o dia ${date.split('-').reverse().join('/')}!`);
         } catch (err) {
             console.error("Erro ao salvar agenda no Firebase: ", err);
             alert("Não foi possível salvar a agenda.");
         }
-
-        document.querySelectorAll('input[name="hours-checked"]:checked').forEach(cb => cb.checked = false);
     });
 });
 
@@ -138,7 +169,7 @@ function setupSidebarNavigation() {
     });
 }
 
-// ================= REAL-TIME: MONITORAMENTO DO BANCO EM TEMPO REAL =================
+// ================= MONITORAMENTO DO BANCO EM TEMPO REAL =================
 function listenToBookings() {
     db.collection("bookings").onSnapshot((snapshot) => {
         let newBookingAdded = false;
@@ -187,7 +218,7 @@ function triggerNewBookingAlert() {
         gainNode.connect(audioCtx.destination);
 
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
         gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
 
         oscillator.start();
@@ -303,12 +334,12 @@ async function renderFinance() {
     }
 }
 
-// ================= PARÂMETROS GLOBAIS DE LIMPEZA =================
+// ================= CONTROLES GLOBAIS =================
 function setupAdminControls() {
     document.getElementById('btn-clear-history').addEventListener('click', async () => {
         const todayStr = new Date().toISOString().split('T')[0];
 
-        if (confirm('Deseja excluir do Firebase apenas o histórico de agendamentos passados (anteriores a hoje)? Isso reciclará seu armazenamento grátis.')) {
+        if (confirm('Deseja excluir do Firebase apenas o histórico de agendamentos passados (anteriores a hoje)?')) {
             try {
                 const querySnapshot = await db.collection("bookings").get();
                 let deletedCount = 0;
@@ -323,7 +354,7 @@ function setupAdminControls() {
                 });
 
                 await batch.commit();
-                alert(`Sucesso! ${deletedCount} agendamentos antigos foram reciclados da nuvem.`);
+                alert(`Sucesso! ${deletedCount} agendamentos antigos foram limpos do banco de dados.`);
             } catch (err) {
                 console.error("Erro ao limpar histórico: ", err);
             }
@@ -395,7 +426,6 @@ function setupTabListeners() {
     });
 }
 
-// LIMPADOR DE NÚMERO TELEFÔNICO INCORPORADO
 function cleanPhoneNumber(phone) {
     let clean = phone.replace(/\D/g, '');
     if (clean.length === 11 && !clean.startsWith('55')) {
@@ -453,7 +483,7 @@ function renderBookings() {
             if (booking.currentUrl) {
                 photosHtml += `
                     <div style="flex: 1;">
-                        <span style="font-size: 0.65rem; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 4px; letter-spacing:0.5px;">CABELO/UNHA ATUAL:</span>
+                        <span style="font-size: 0.65rem; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 4px; letter-spacing:0.5px;">ATUAL:</span>
                         <div onclick="window.previewImage('${booking.currentUrl}')" style="cursor: pointer;">
                             <img src="${booking.currentUrl}" style="width: 100%; max-width: 120px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" alt="Foto Atual">
                         </div>
@@ -485,7 +515,6 @@ function renderBookings() {
                         📅 ${formattedDate} às ${booking.time}h
                     </p>
                     ${specsHtml}
-                    <!-- Fotos inline do Firestore -->
                     ${photosHtml}
                 </div>
                 <button class="btn-delete-sleek" onclick="window.deleteBooking('${booking.id}')">Excluir</button>
@@ -495,7 +524,7 @@ function renderBookings() {
     });
 }
 
-// ================= GESTÃO DOS POPUPS DE PREVISUALIZAÇÃO =================
+// ================= MODAL PRÉVIA E EXCLUSÕES =================
 window.previewImage = function(base64) {
     const modal = document.getElementById('image-preview-modal');
     const img = document.getElementById('preview-modal-img');
@@ -504,7 +533,7 @@ window.previewImage = function(base64) {
 };
 
 window.deleteBooking = async function(docId) {
-    if (confirm('Deseja cancelar esse agendamento? Ele será excluído permanentemente da nuvem do Firebase.')) {
+    if (confirm('Deseja cancelar esse agendamento? Ele será excluído permanentemente.')) {
         try {
             await db.collection("bookings").doc(docId).delete();
         } catch (err) {
