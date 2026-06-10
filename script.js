@@ -184,7 +184,7 @@ function renderDynamicForm(serviceId, targetElement) {
             </div>
             <div class="form-group" style="margin-bottom: 0;">
                 <label>Observações</label>
-                <textarea id="spec-obs" class="textarea-premium" placeholder="Informe se já tem extensão de outro local ou se é a sua primeira aplicação..."></textarea>
+                <textarea id="spec-obs" class="textarea-premium" placeholder="Informe se já tem extensão de outro local..."></textarea>
             </div>
         `;
     }
@@ -252,12 +252,22 @@ async function renderSlots(date) {
     
     if (!selectedService) return;
 
-    const docRef = doc(db, "availableSlots", date);
+    const targetProfessional = selectedService.professional;
+    const docId = `${date}_${targetProfessional}`;
+    const docRef = doc(db, "availableSlots", docId);
     let dayHours = [];
+    
     try {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             dayHours = docSnap.data().times || [];
+        } else {
+            // Fallback para ler a escala antiga de data geral (se houver)
+            const fallbackRef = doc(db, "availableSlots", date);
+            const fallbackSnap = await getDoc(fallbackRef);
+            if (fallbackSnap.exists()) {
+                dayHours = fallbackSnap.data().times || [];
+            }
         }
     } catch (err) {
         console.error("Erro ao ler escala: ", err);
@@ -270,7 +280,6 @@ async function renderSlots(date) {
     }
 
     const bookingsRef = collection(db, "bookings");
-    const targetProfessional = selectedService.professional;
     const q = query(bookingsRef, where("date", "==", date), where("professional", "==", targetProfessional));
     
     let bookedTimes = [];
@@ -391,7 +400,6 @@ function openConfirmationModal() {
     document.getElementById('summary-date').innerText = formattedDate;
     document.getElementById('summary-time').innerText = selectedSlot + ' horas';
 
-    // 🛡️ CORREÇÃO DE ERRO: Optional Chaining (?. ) para evitar que o código quebre caso os inputs não estejam renderizados na DOM
     const inspirationFile = document.getElementById('file-inspiration')?.files?.[0];
     const currentFile = document.getElementById('file-current')?.files?.[0];
     let fileSummary = 'Fotos não selecionadas.';
@@ -466,7 +474,6 @@ async function executeFinalBooking() {
     let inspirationBase64 = "";
     let currentBase64 = "";
 
-    // 🛡️ CORREÇÃO DE ERRO: Tratamento seguro dos inputs de imagem
     const fileInspiration = document.getElementById('file-inspiration')?.files?.[0];
     const fileCurrent = document.getElementById('file-current')?.files?.[0];
 
